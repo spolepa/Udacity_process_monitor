@@ -57,7 +57,7 @@ vector<int> LinuxParser::Pids() {
       // Is every character of the name a digit?
       string filename(file->d_name);
       if (std::all_of(filename.begin(), filename.end(), isdigit)) {
-        int pid = stoi(filename);
+        int pid = std::stoi(filename);
         pids.push_back(pid);
       }
     }
@@ -102,21 +102,51 @@ long LinuxParser::UpTime() {
      std::istringstream linestream(line);
      linestream >> uptime;
    }
-   return stol(uptime);
+   return std::stol(uptime);
 }
 
 // TODO: Read and return the number of jiffies for the system
-long LinuxParser::Jiffies() { return 0; }
+long LinuxParser::Jiffies() { 
+  long sum = 0;
+  vector<string> data = LinuxParser::CpuUtilization();
+  for(int i = 1;i <= 10;i++){
+    sum += std::stol(data[i]);
+  }
+  return sum*sysconf(_SC_CLK_TCK);
+}
 
 // TODO: Read and return the number of active jiffies for a PID
 // REMOVE: [[maybe_unused]] once you define the function
-long LinuxParser::ActiveJiffies(int pid[[maybe_unused]]) { return 0; }
+long LinuxParser::ActiveJiffies(int pid) { 
+  string line;
+  string spid = to_string(pid);
+  long val = 0;
+  string data;
+  //long one, two, thr, four, fv, sx, svn, eght, nine, ten, ele, twe, thirtn, frtn, fftn, sxtn, svtn, egtn, nitn, twty, twtn, twtto;
+  std::ifstream stream_upt(kProcDirectory + spid + kStatFilename);
+  if(stream_upt.is_open()){
+    std::getline(stream_upt, line);
+    std::istringstream linestream(line);
+    for(int count = 1; count<=22 ; count++){
+      linestream >> data;
+      if(count==14 || count==15 || count==16 || count==17){
+        val += stol(data);
+      }
+    }
+  }
+  return val;
+}
 
 // TODO: Read and return the number of active jiffies for the system
-long LinuxParser::ActiveJiffies() { return 0; }
+long LinuxParser::ActiveJiffies() {
+  return (LinuxParser::Jiffies()-LinuxParser::IdleJiffies());
+}
 
 // TODO: Read and return the number of idle jiffies for the system
-long LinuxParser::IdleJiffies() { return 0; }
+long LinuxParser::IdleJiffies() { 
+  vector<string> data = LinuxParser::CpuUtilization();
+  return (stol(data[4])+stol(data[5])); 
+}
 
 // TODO: Read and return CPU utilization
 vector<string> LinuxParser::CpuUtilization() { 
@@ -150,12 +180,12 @@ int LinuxParser::TotalProcesses() {
       std::istringstream linestream(line);
       linestream >> word >> totalno;
       if (word == "processes"){
-        return stoi(totalno);
+        return std::stoi(totalno);
       }
       else continue;
     }
   }
-  return stoi(totalno);
+  return std::stoi(totalno);
 }
 
 // TODO: Read and return the number of running processes
@@ -169,12 +199,12 @@ int LinuxParser::RunningProcesses() {
       std::istringstream linestream(line);
       linestream >> word >> running_no;
       if (word == "procs_running"){
-        return stoi(running_no);
+        return std::stoi(running_no);
       }
       else continue;
     }
   }
-  return stoi(running_no);
+  return std::stoi(running_no);
 }
 
 // TODO: Read and return the command associated with a process
