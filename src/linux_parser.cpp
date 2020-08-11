@@ -230,9 +230,8 @@ string LinuxParser::Ram(int pid) {
   if(stream_ram.is_open()){
     while(std::getline(stream_ram, line)){
       std::istringstream linestream(line);
-      linestream >> first_word;
+      linestream >> first_word >> ram;
       if(first_word == "VmSize:"){
-        linestream >> first_word >> ram;
         return ram;
       }
       else continue;
@@ -252,9 +251,9 @@ string LinuxParser::Uid(int pid) {
   if(stream_uid.is_open()){
     while(std::getline(stream_uid, line)){
       std::istringstream linestream(line);
-      linestream >> first_word;
+      linestream >> first_word >> uid;
       if(first_word == "Uid:"){
-        linestream >> first_word >> uid;
+        return uid;
       }
       else continue;
     }
@@ -288,7 +287,6 @@ long LinuxParser::UpTime(int pid) {
   string line;
   string spid = to_string(pid);
   string data;
-  //long one, two, thr, four, fv, sx, svn, eght, nine, ten, ele, twe, thirtn, frtn, fftn, sxtn, svtn, egtn, nitn, twty, twtn, twtto;
   std::ifstream stream_upt(kProcDirectory + spid + kStatFilename);
   if(stream_upt.is_open()){
     std::getline(stream_upt, line);
@@ -296,7 +294,6 @@ long LinuxParser::UpTime(int pid) {
     for(int count = 1; count<=22 ; count++){
       linestream >> data;
     }
-    //linestream >> one >> two >> thr >> four >> fv >> sx >> svn >> eght >> nine >> ten >> ele >> twe >> thirtn >> frtn >> fftn >> sxtn >> svtn >> egtn >> nitn >> twty >> twtn >> twtto;
   }  
   return stol(data);
 }
