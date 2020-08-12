@@ -89,7 +89,7 @@ float LinuxParser::MemoryUtilization() {
       }
     }
   }
-  return (stof(MemTotal)-stof(MemFree));
+  return ((stof(MemTotal)-stof(MemFree)))/stof(MemTotal);
 }
 
 // TODO: Read and return the system uptime
@@ -108,11 +108,23 @@ long LinuxParser::UpTime() {
 // TODO: Read and return the number of jiffies for the system
 long LinuxParser::Jiffies() { 
   long sum = 0;
-  vector<string> data = LinuxParser::CpuUtilization();
-  for(int i = 1;i <= 10;i++){
-    sum += std::stol(data[i]);
+  string line;
+  vector<string> utildata;
+  string cpu_name, user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice;
+  std::ifstream stream_jiffy(kProcDirectory + kStatFilename);
+  if(stream_jiffy.is_open()){
+    while(std::getline(stream_jiffy, line)){
+      std::istringstream linestream(line);
+      linestream >> cpu_name >> user >> nice >> system >> idle >> iowait >> irq >> softirq >> steal >> guest >> guest_nice;
+      if(cpu_name == "CPU"){
+        utildata = {user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice};
+      }
+    }
   }
-  return sum*sysconf(_SC_CLK_TCK);
+  for(int i = 1;i <= 10;i++){
+    sum += std::stol(utildata[i]);
+  }
+  return sum;
 }
 
 // TODO: Read and return the number of active jiffies for a PID
@@ -122,7 +134,6 @@ long LinuxParser::ActiveJiffies(int pid) {
   string spid = to_string(pid);
   long val = 0;
   string data;
-  //long one, two, thr, four, fv, sx, svn, eght, nine, ten, ele, twe, thirtn, frtn, fftn, sxtn, svtn, egtn, nitn, twty, twtn, twtto;
   std::ifstream stream_upt(kProcDirectory + spid + kStatFilename);
   if(stream_upt.is_open()){
     std::getline(stream_upt, line);
@@ -143,9 +154,21 @@ long LinuxParser::ActiveJiffies() {
 }
 
 // TODO: Read and return the number of idle jiffies for the system
-long LinuxParser::IdleJiffies() { 
-  vector<string> data = LinuxParser::CpuUtilization();
-  return (stol(data[4])+stol(data[5])); 
+long LinuxParser::IdleJiffies() {
+  string line;
+  vector<string> utildata;
+  string cpu_name, user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice;
+  std::ifstream stream_idlejiffy(kProcDirectory + kStatFilename);
+  if(stream_idlejiffy.is_open()){
+    while(std::getline(stream_idlejiffy, line)){
+      std::istringstream linestream(line);
+      linestream >> cpu_name >> user >> nice >> system >> idle >> iowait >> irq >> softirq >> steal >> guest >> guest_nice;
+      if(cpu_name == "CPU"){
+        utildata = {user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice};
+      }
+    }
+  }
+  return (stol(utildata[4])+stol(utildata[5])); 
 }
 
 // TODO: Read and return CPU utilization
@@ -226,18 +249,19 @@ string LinuxParser::Ram(int pid) {
   string first_word;
   string spid = to_string(pid);
   string ram;
+  int rami;
   std::ifstream stream_ram(kProcDirectory + spid + kStatusFilename);
   if(stream_ram.is_open()){
     while(std::getline(stream_ram, line)){
       std::istringstream linestream(line);
       linestream >> first_word >> ram;
       if(first_word == "VmSize:"){
-        return ram;
+        rami = stoi(ram)/1024;;
       }
       else continue;
     }
   }
-  return ram;
+  return to_string(rami);
 }
 
 // TODO: Read and return the user ID associated with a process
