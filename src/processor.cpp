@@ -6,8 +6,6 @@
 float Processor::Utilization() { 
     std::vector<long> utildata = LinuxParser::CpuUtilization();
     float cpu_util = 0.0;
-    long prevTotal = 0; 
-    long prevIdle = 0;
     if(prevTotal!=0){
         long total = utildata[0];
         long idle = utildata[1];
