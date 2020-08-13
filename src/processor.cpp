@@ -11,7 +11,7 @@ float Processor::Utilization() {
         long idle = utildata[1];
         long difftotal = total - prevTotal;
         long diffidle = idle - prevIdle;
-        cpu_util = (difftotal-diffidle)/difftotal;
+        cpu_util = (difftotal-diffidle)/float(difftotal);
     }
 
     prevTotal = utildata[0];
