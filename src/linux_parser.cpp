@@ -116,12 +116,12 @@ long LinuxParser::Jiffies() {
     while(std::getline(stream_jiffy, line)){
       std::istringstream linestream(line);
       linestream >> cpu_name >> user >> nice >> system >> idle >> iowait >> irq >> softirq >> steal >> guest >> guest_nice;
-      if(cpu_name == "CPU"){
+      if(cpu_name == "cpu"){
         utildata = {user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice};
       }
     }
   }
-  for(int i = 1;i <= 10;i++){
+  for(int i = 0;i < 10;i++){
     sum += std::stol(utildata[i]);
   }
   return sum;
@@ -163,33 +163,39 @@ long LinuxParser::IdleJiffies() {
     while(std::getline(stream_idlejiffy, line)){
       std::istringstream linestream(line);
       linestream >> cpu_name >> user >> nice >> system >> idle >> iowait >> irq >> softirq >> steal >> guest >> guest_nice;
-      if(cpu_name == "CPU"){
+      if(cpu_name == "cpu"){
         utildata = {user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice};
       }
     }
   }
-  return (stol(utildata[4])+stol(utildata[5])); 
+  return (stol(utildata[3])+stol(utildata[4])); 
 }
 
 // TODO: Read and return CPU utilization
-vector<string> LinuxParser::CpuUtilization() { 
-  vector<string> utildata;
+std::vector<long> LinuxParser::CpuUtilization() { 
+  vector<long> utildata;
   string line;
-  string cpu_name, user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice;
-  std::ifstream streamcpu(kProcDirectory + kStatFilename);
-  if(streamcpu.is_open()){
-    while(std::getline(streamcpu, line)){
-      std::istringstream linestream(line);
-      linestream >> cpu_name;
-      if (cpu_name == "cpu"){
-        linestream >> cpu_name >> user >> nice >> system >> idle >> iowait >> irq >> softirq >> steal >> guest >> guest_nice;
-        utildata = {user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice};
-        return utildata;
-      }
-      else continue;
-    }
-  }
+  long active_time = LinuxParser::ActiveJiffies();
+  long total_time = LinuxParser::Jiffies();
+  utildata.push_back(total_time);
+  utildata.push_back(active_time);
   return utildata;
+
+  //string cpu_name, user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice;
+  //std::ifstream streamcpu(kProcDirectory + kStatFilename);
+  //if(streamcpu.is_open()){
+    //while(std::getline(streamcpu, line)){
+      //std::istringstream linestream(line);
+      //linestream >> cpu_name;
+      //if (cpu_name == "cpu"){
+        //linestream >> cpu_name >> user >> nice >> system >> idle >> iowait >> irq >> softirq >> steal >> guest >> guest_nice;
+        //utildata = {user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice};
+        //return utildata;
+      //}
+      //else continue;
+    //}
+  //}
+  //return utildata;
 }
 
 // TODO: Read and return the total number of processes
@@ -290,16 +296,26 @@ string LinuxParser::Uid(int pid) {
 string LinuxParser::User(int pid) { 
   string line;
   string suid = LinuxParser::Uid(pid);
-  string find_this = ":x:" + suid;
+  //string find_this = ":x:" + suid;
   string user;
+  string x;
+  string uid;
   std::ifstream stream_user(kPasswordPath);
   if(stream_user.is_open()){
     while(std::getline(stream_user, line)){
-      if(line.find(find_this)!=string::npos){
-        std::istringstream linestream(line);
-        linestream >> user;
+      std::replace(line.begin(),line.end(),':',' ');
+      std::istringstream linestream(line);
+      linestream >> user >> x >> uid;
+      if(uid==suid){
+        return user;
       }
       else continue;
+      //if(line.find(find_this)!=string::npos){
+        //std::replace(line.begin(),line.end(),":"," ");
+        //std::istringstream linestream(line);
+        //linestream >> user;
+      //}
+      //else continue;
     }
   }
   return user;
@@ -315,9 +331,9 @@ long LinuxParser::UpTime(int pid) {
   if(stream_upt.is_open()){
     std::getline(stream_upt, line);
     std::istringstream linestream(line);
-    for(int count = 1; count<=22 ; count++){
+    for(int count = 0; count<22 ; count++){
       linestream >> data;
     }
   }  
-  return stol(data);
+  return (stol(data)/sysconf(_SC_CLK_TCK));
 }
