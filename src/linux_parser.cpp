@@ -175,10 +175,10 @@ long LinuxParser::IdleJiffies() {
 std::vector<long> LinuxParser::CpuUtilization() { 
   vector<long> utildata;
   string line;
-  long active_time = LinuxParser::ActiveJiffies();
+  long idle_time = LinuxParser::IdleJiffies();
   long total_time = LinuxParser::Jiffies();
   utildata.push_back(total_time);
-  utildata.push_back(active_time);
+  utildata.push_back(idle_time);
   return utildata;
 
   //string cpu_name, user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice;
